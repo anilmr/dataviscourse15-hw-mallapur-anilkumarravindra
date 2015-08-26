@@ -1,2 +1,2 @@
-# dataviscourse15-hw-mallapur-anilkumarravindra
-Home Work repository for Data Visualization course.
+Name: Anil Kumar Ravindra Mallapur
+email: anilmr@cs.utah.edu
