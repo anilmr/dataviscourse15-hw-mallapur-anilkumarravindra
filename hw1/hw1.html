@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title> Data Visualization Homework 1 </title>
+  <style>
+    .barchart {
+      fill: #3498db;
+    }
+    .linechart {
+      stroke: #3498db;
+      stroke-width:2;
+      fill: none;
+    }
+    .scatter {
+      fill: #3498db;
+    }
+    .areachart {
+      stroke: #3498db;
+      fill: #3498db;
+    }
+    #rectangle {
+      stroke: black;
+      stroke-width: 3;
+      fill: none;
+    }
+    
+  </style>
+</head>
+<body>
+  <h1> CS-5630 / CS-6630 Homework 1 </h1>
+  <p> Name : Anil Kumar Ravindra Mallapur </p>
+  <p> email: anilmr@cs.utah.edu </p>
+  <p> uNID : u0942509 </p>
+  <p> Note: All readings are multiplied by factor 10 to obtain the desired results. </p>
+  <h2> Bar Chart </h2>
+    <div class="charts">
+    <svg class="barchart" width="1000" height="100">
+      <rect width="19" height="91.4" x="20" y="8.6"/>
+      <rect width="19" height="81.4" x="40" y="18.6"/>
+      <rect width="19" height="87.4" x="60" y="12.6"/>
+      <rect width="19" height="87.7" x="80" y="12.3"/>
+      <rect width="19" height="92.6" x="100" y="7.4"/>
+      <rect width="19" height="81.0" x="120" y="19"/>
+      <rect width="19" height="61.3" x="140" y="38.7"/>
+      <rect width="19" height="31.0" x="160" y="69"/>
+      <rect width="19" height="91.3" x="180" y="8.7"/>
+      <rect width="19" height="72.6" x="200" y="27.4"/>
+      <rect width="19" height="47.4" x="220" y="52.6"/>
+    </svg>
+    </div>
+
+    <div class="charts">
+    <svg class="barchart" width="1000" height="200">
+      <rect width="19" height="100" x="20" y="100"/>
+      <rect width="19" height="80" x="40" y="120"/>
+      <rect width="19" height="130" x="60" y="70"/>
+      <rect width="19" height="90" x="80" y="110"/>
+      <rect width="19" height="110" x="100" y="90"/>
+      <rect width="19" height="140" x="120" y="60"/>
+      <rect width="19" height="60" x="140" y="140"/>
+      <rect width="19" height="40" x="160" y="160"/>
+      <rect width="19" height="120" x="180" y="80"/>
+      <rect width="19" height="70" x="200" y="130"/>
+      <rect width="19" height="50" x="220" y="150"/>
+    </svg>
+    </div>
+
+  <h2> Line Chart </h2>
+    <div class="charts">
+    <svg class="linechart" width="1000" height="100">
+      <path d="M20 8.6 L40 18.6 L60 12.6 L80 12.3 L100 7.4 L120 19 L140 38.7 L160 69 L180 8.7 L200 27.4 L220 52.6"/>
+    </svg>
+    </div>
+
+    <div class="charts">
+    <svg class="linechart" width="1000" height="200">
+      <path d="M20 100 L40 120 L60 70 L80 110 L100 90 L120 60 L140 140 L160 160 L180 80 L200 130 L220 150"/> 
+    </svg>
+    </div>
+
+  <h2> ScatterPlot </h2>
+    <div id="scatterbox">
+    <svg class="scatter" height="200" width="300">
+    <g>
+      <rect id="rectangle" width="300" height="200"/>
+      <circle cx="100.0" cy="8.6" r="5"/>
+      <circle cx="80.0" cy="18.6" r="5"/>
+      <circle cx="130.0" cy="12.6" r="5"/>
+      <circle cx="90.0" cy="12.3" r="5"/>
+      <circle cx="110.0" cy="7.4" r="5"/>
+      <circle cx="140.0" cy="19" r="5"/>
+      <circle cx="60.0" cy="38.7" r="5"/>
+      <circle cx="40.0" cy="69" r="5"/>
+      <circle cx="120.0" cy="8.7" r="5"/>
+      <circle cx="70.0" cy="27.4" r="5"/>
+      <circle cx="50.0" cy="52.6" r="5"/>
+    </g>
+    </svg>
+    </svg>
+    </div>
+
+  <h2> Area Charts </h2>
+    <div class="charts">
+    <svg class="areachart" width="1000" height="100">
+      <path d="M20 100 L20 8.6 L40 18.6 L60 12.6 L80 12.3 L100 7.4 L120 19 L140 38.7 L160 69 L180 8.7 L200 27.4 L220 52.6 L220 100 Z"/>
+    </svg>
+    </div>
+
+    <div class="charts">
+    <svg class="areachart" width="1000" height="200">
+      <path d="M20 200 L20 100 L40 120 L60 70 L80 110 L100 90 L120 60 L140 140 L160 160 L180 80 L200 130 L220 150 L220 200 Z"/> 
+    </svg>
+    </div>
+</body>
+</html>
