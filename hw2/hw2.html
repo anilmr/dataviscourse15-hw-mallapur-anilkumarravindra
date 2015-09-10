@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Homework 2 Solution</title>
+    <style>
+        .barChart {
+            fill: steelblue;
+            stroke: darkgray;
+            stroke-width: 1px;
+        }
+        /*
+        .barChart rect:hover {
+            fill: seagreen;
+        }*/
+        .lines {
+            stroke: steelblue;
+            fill: none
+        }
+
+        .areas {
+            stroke: none;
+            fill: steelblue
+        }
+
+        circle {
+            fill: steelblue;
+        }
+
+        .frame {
+            fill: none;
+            stroke: black;
+            stroke-width: 2px;
+        }
+
+        /* Styles that clean up the layout;
+         * you can ignore these */
+        div {
+            display: inline-block;
+            border: 1px solid lightgray;
+            margin: 1em;
+        }
+
+        div, span {
+            padding: 1em;
+        }
+
+        .tooltip {
+            position: absolute;
+            width: 200px;
+            height: 28px;
+            pointer-events: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+    <script src="script.js"></script>
+</head>
+<body>
+<body>
+
+<h3>CS-5630 / CS-6630 Homework 2</h3>
+<span>Anil Kumar Ravindra Mallapur</span>
+<span>anilmr@cs.utah.edu</span>
+<span>u0942509</span>
+
+<br/>
+<hr/>
+<br/>
+
+<span>
+    <button onclick="staircase()">Staircase</button>
+</span>
+
+<span>
+    <label>Dataset:</label>
+    <select id="dataset" onChange="changeData()">
+        <option value="anscombe_I">Anscombe's Quartet I</option>
+        <option selected value="anscombe_II">Anscombe's Quartet II</option>
+        <option value="anscombe_III">Anscombe's Quartet III</option>
+        <option value="anscombe_IV">Anscombe's Quartet IV</option>
+    </select>
+</span>
+
+<span>
+    <button onclick="randomSubset()">Random Subset</button>
+</span>
+
+<br/>
+
+<div>
+    <h2>Bar Charts</h2>
+    <svg id="barChart1" class="barChart" width="250" height="250">
+        <!-- Paste your HW 1 solution here -->
+        <rect width="19" height="91.4" x="20" y="8.6"/>
+        <rect width="19" height="81.4" x="40" y="18.6"/>
+        <rect width="19" height="87.4" x="60" y="12.6"/>
+        <rect width="19" height="87.7" x="80" y="12.3"/>
+        <rect width="19" height="92.6" x="100" y="7.4"/>
+        <rect width="19" height="81.0" x="120" y="19"/>
+        <rect width="19" height="61.3" x="140" y="38.7"/>
+        <rect width="19" height="31.0" x="160" y="69"/>
+        <rect width="19" height="91.3" x="180" y="8.7"/>
+        <rect width="19" height="72.6" x="200" y="27.4"/>
+        <rect width="19" height="47.4" x="220" y="52.6"/>
+    </svg>
+
+    <svg id="barChart2" class="barChart" width="250" height="250">
+        <!-- Paste your HW 1 solution here -->
+        <rect width="19" height="100" x="20" y="100"/>
+        <rect width="19" height="80" x="40" y="120"/>
+        <rect width="19" height="130" x="60" y="70"/>
+        <rect width="19" height="90" x="80" y="110"/>
+        <rect width="19" height="110" x="100" y="90"/>
+        <rect width="19" height="140" x="120" y="60"/>
+        <rect width="19" height="60" x="140" y="140"/>
+        <rect width="19" height="40" x="160" y="160"/>
+        <rect width="19" height="120" x="180" y="80"/>
+        <rect width="19" height="70" x="200" y="130"/>
+        <rect width="19" height="50" x="220" y="150"/>
+    </svg>
+</div>
+
+<div>
+    <h2>Line Charts</h2>
+
+    <svg id="line1" class="lines" width="250" height="250">
+        <!-- Paste your HW 1 solution here -->
+        <path d="M20 8.6 L40 18.6 L60 12.6 L80 12.3 L100 7.4 L120 19 L140 38.7 L160 69 L180 8.7 L200 27.4 L220 52.6"/>
+    </svg>
+
+    <svg id="line2" class="lines" width="250" height="250">
+        <!-- Paste your HW 1 solution here -->
+        <path d="M20 100 L40 120 L60 70 L80 110 L100 90 L120 60 L140 140 L160 160 L180 80 L200 130 L220 150"/> 
+    </svg>
+</div>
+
+<div>
+    <h2>Area Charts</h2>
+
+    <svg class="areas" width="250" height="250">
+        <!-- Paste your HW 1 solution here -->
+        <path d="M20 100 L20 8.6 L40 18.6 L60 12.6 L80 12.3 L100 7.4 L120 19 L140 38.7 L160 69 L180 8.7 L200 27.4 L220 52.6 L220 100 Z"/>
+    </svg>
+
+    <svg id="area2" class="areas" width="200" height="200">
+        <!-- Paste your HW 1 solution here -->
+        <path d="M20 200 L20 100 L40 120 L60 70 L80 110 L100 90 L120 60 L140 140 L160 160 L180 80 L200 130 L220 150 L220 200 Z"/> 
+    </svg>
+</div>
+
+<div>
+    <h2>Scatterplot</h2>
+
+    <svg class="scatter"width="260" height="260">
+        <!-- Paste your HW 1 solution here -->
+        
+        <rect class="frame" width="260" height="260"/>
+        <circle cx="100.0" cy="8.6" r="5"/>
+        <circle cx="80.0" cy="18.6" r="5"/>
+        <circle cx="130.0" cy="12.6" r="5"/>
+        <circle cx="90.0" cy="12.3" r="5"/>
+        <circle cx="110.0" cy="7.4" r="5"/>
+        <circle cx="140.0" cy="19" r="5"/>
+        <circle cx="60.0" cy="38.7" r="5"/>
+        <circle cx="40.0" cy="69" r="5"/>
+        <circle cx="120.0" cy="8.7" r="5"/>
+        <circle cx="70.0" cy="27.4" r="5"/>
+        <circle cx="50.0" cy="52.6" r="5"/>
+
+    </svg>
+</div>
+
+</body>
+</html>
