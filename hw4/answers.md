@@ -1,11 +1,12 @@
 # Answers for Questions
 
 ### Q2a
-element: rect and class: background
+element: rect and class: extent
 
 ### Q2b
-element : rect and class: extent
+element: g and class: brush
 
 ### Q2c
+element: rect and class: background, provides the background for brush. Provides area for crosshair. 
 
 

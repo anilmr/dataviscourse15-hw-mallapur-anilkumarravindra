@@ -36,27 +36,20 @@
         // Create a handler that will deal with a custom event named "selectionChanged"
         // (you will need to edit this line)
         var eventHandler = d3.dispatch("selectionChanged");
-        var neweventHandler = d3.dispatch("newselectionChanged");
         // Instantiate all Vis Objects here
-        var countVis = new CountVis(d3.select("#countVis"), allData, metaData, eventHandler, neweventHandler);
+        var countVis = new CountVis(d3.select("#countVis"), allData, metaData, eventHandler);
         var ageVis = new AgeVis(d3.select("#ageVis"), allData, metaData);
         var prioVis = new PrioVis(d3.select("#prioVis"), allData, metaData);
-        //var compVis = new CompareVis(d3.select("#compVis"), allData, metaData);
-        
+
         function doSelection(x,y) {
             ageVis.onSelectionChange(x,y);
             prioVis.onSelectionChange(x,y);
-            //compVis.onSelectionChange(x,y);
         }
 
-        function newdoSelection(x,y) {
-            compVis.newonSelectionChange(x,y);
-        }
         // ******** TASK 3b, 3c *******
         // Bind the eventHandler to the Vis Objects
         //eventHandler.on("selectionChanged", countVis);
         eventHandler.on("selectionChanged", doSelection);
-        neweventHandler.on("newselectionChanged", newdoSelection);
 
 
         // events will be created from the CountVis object (TASK 4b)

@@ -20,7 +20,7 @@
  * @param _eventHandler -- the Eventhandling Object to emit data to (see Task 4)
  * @constructor
  */
-function CountVis(_parentElement, _data, _metaData, _eventHandler) {
+function CountVis(_parentElement, _data, _metaData, _eventHandler, _neweventHandler) {
     /**
      * A word about "this":
      *
@@ -43,6 +43,7 @@ function CountVis(_parentElement, _data, _metaData, _eventHandler) {
     self.data = _data;
     self.metaData = _metaData;
     self.eventHandler = _eventHandler;
+    self.neweventHandler = _neweventHandler;
     self.displayData = [];
 
     self.initVis();
@@ -72,12 +73,19 @@ CountVis.prototype.initVis = function () {
     
     // define a clipping region for the graph
     self.brush = d3.svg.brush().x(self.xScale).on("brush", brushed);
-
+    self.brush2 = d3.svg.brush().x(self.xScale).on("brush", brushedalt);
     // create the brush, and
     function brushed() {
         self.eventHandler.selectionChanged(self.brush.extent()[0], self.brush.extent()[1]);
         var text = self.brush.extent()[0] + " -> " + self.brush.extent()[1];
         d3.select("#brushInfo")
+            .html(text);
+    }
+
+    function brushedalt() {
+        self.neweventHandler.newselectionChanged(self.brush2.extent()[0], self.brush2.extent()[1]);
+        var text = self.brush2.extent()[0] + " -> " + self.brush2.extent()[1];
+        d3.select("#brushInfo2")
             .html(text);
     }
     // ******* TASK 3a *******
@@ -93,8 +101,14 @@ CountVis.prototype.initVis = function () {
     
     self.visG.append("g").attr("class", "brush").call(self.brush)
         .selectAll("rect").attr({
-        height:  self.graphH
+        height:  self.graphH/4
         });
+    
+    self.visG.append("g").attr("class", "brushed").call(self.brush2)
+        .selectAll("rect").attr({
+        height:  self.graphH/4
+        })
+        .attr("transform", "translate(0," + self.graphH/4 + 100 + ")");
 
     // filter, aggregate, modify data
     self.wrangleData();
@@ -196,6 +210,7 @@ CountVis.prototype.addSlider = function (svg) {
         
         // ******* TASK 2b *******
         // the current value of the slider:
+        console.log("Y Axis Slider value: ", sliderValue);
         // do something here to deform the y scale
         self.yScale.exponent(sliderValue);
 

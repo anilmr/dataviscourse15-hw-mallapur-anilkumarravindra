@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Homework 4 - MyWorld Data</title>
+
+    <!-- ADD Libraries-->
+    <script src="http://d3js.org/d3.v3.js" charset="utf-8"></script>
+    <script src="http://code.jquery.com/jquery-2.1.4.js" charset="utf-8"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="http://d3js.org/queue.v1.min.js"></script>
+
+    <!--Stylesheets-->
+    <link rel="stylesheet" type="text/css" href="libs/bootstrap/css/bootstrap.min.css">
+
+    <!-- Get some nice font-->
+    <link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700' rel='stylesheet' type='text/css'>
+
+
+    <!--------------------------------->
+    <!-- FROM HERE ON IT IS HW4 stuff-->
+    <!--------------------------------->
+    <!-- add own vis classes-->
+    <script src="js/priovis.js"></script>
+    <script src="js/agevis.js"></script>
+    <script src="js/countvis1.js"></script>
+    <script src="js/comparevis.js"></script>
+
+    <!-- add own stylesheet-->
+    <link rel="stylesheet" type="text/css" href="css/myStyle.css">
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="container">
+            <h1>CS-5630 / CS-6630 Homework 4 - MyWorld 2015 Data Visualization</h1>
+            <span>Your Name</span>
+            <span>Your Email Address</span>
+            <span>u0123456</span>
+
+            <div class="row">
+                <div class="col-md-8 col-sm-12">
+                    <p> The following visualization shows you the votes for MyWorld 2015. You can select a time range to see changes in the distribution of votes und distribution of age of the voters.</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-2">
+                    <button class="btn btn-sm btn-primary" id="fitInBtn"> <span class="glyphicon glyphicon-resize-horizontal"></span> reset zoom </button>
+                </div>
+
+                <div class="col-md-8">
+                    <b>First brush:</b> <span id="brushInfo" class="small"></span>
+                    <b>Second brush:</b> <span id="brushInfo2" class="small"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div id="countVis" class="col-md-9">
+                    <svg width="650" height="330">
+
+                    </svg>
+                </div>
+                <div id="ageVis" class="col-md-3">
+                    <svg width="230" height="330">
+
+                    </svg>
+                </div>
+            </div>
+
+            <div class="row">
+                <div id="prioVis" class="col-md-12">
+                    <svg width="650" height="440">
+
+                    </svg>
+                </div>
+            </div>
+            <div class="row">
+                <div id="compVis" class="col-md-12">
+                    <svg width="650" height="440">
+
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <!-- We put the main.js script here, because it runs as soon as it's loaded. We only want this to happen after the rest of our DOM already exists. -->
+        <script type="text/javascript">
+            (function () {
+    // some variables
+    var allData = [];
+    var metaData = {};
+
+    // this function can convert Date objects to a string
+    // it can also convert strings to Date objects
+    // see: https://github.com/mbostock/d3/wiki/Time-Formatting
+    var dateFormatter = d3.time.format("%Y-%m-%d");
+    // call this function after Data is loaded, reformatted and bound to the variables
+    function initVis() {
+        
+        // ******* TASK 3b, 3c *******
+        // Create a handler that will deal with a custom event named "selectionChanged"
+        // (you will need to edit this line)
+        var eventHandler = d3.dispatch("selectionChanged");
+        var neweventHandler = d3.dispatch("newselectionChanged");
+        // Instantiate all Vis Objects here
+        var countVis = new CountVis(d3.select("#countVis"), allData, metaData, eventHandler, neweventHandler);
+        var ageVis = new AgeVis(d3.select("#ageVis"), allData, metaData);
+        var prioVis = new PrioVis(d3.select("#prioVis"), allData, metaData);
+        var compVis = new CompareVis(d3.select("#compVis"), allData, metaData, eventHandler, neweventHandler);
+
+        function doSelection(x,y) {
+            compVis.onSelectionChange(x,y);
+            ageVis.onSelectionChange(x,y);
+            prioVis.onSelectionChange(x,y);
+        }
+
+        function newdoSelection(x,y) {
+            compVis.newonSelectionChange(x,y);
+        }
+
+        // ******** TASK 3b, 3c *******
+        // Bind the eventHandler to the Vis Objects
+        //eventHandler.on("selectionChanged", countVis);
+        eventHandler.on("selectionChanged", doSelection);
+        neweventHandler.on("newselectionChanged", newdoSelection);
+        // events will be created from the CountVis object (TASK 4b)
+        // events will be consumed by the PrioVis and AgeVis object
+        // (you should bind the appropriate functions here)
+        // Also make sure to display something reasonable about
+        // the brush in #brushInfo
+        
+        
+    }
+
+    // call this function after both files are loaded -- error should be "null" if no error
+    function dataLoaded(error, perDayData, _metaData) {
+        if (!error) {
+            // make our data look nicer and more useful:
+            allData = perDayData.map(function (d) {
+                var res = {
+                    time: dateFormatter.parse(d.day),
+                    count: +d["count(*)"]
+                };
+                
+                res.prios = d3.range(0, 16).map(function (counter) {
+                        return d["sum(p" + counter + ")"];
+                    });
+                res.ages = d3.range(0, 99).map(function () {
+                    return 0;
+                });
+                d.age.forEach(function (a) {
+                    if (a.age < 100) {
+                        res.ages[a.age] = a["count(*)"];
+                    }
+                });
+                return res;
+            });
+            metaData = _metaData;
+
+            initVis();
+        }
+    }
+
+    function startHere() {
+        // ******* TASK 1a *******
+        // Load each data file ASYNCHRONOUSLY, and then call dataLoaded() when they are finished.
+        
+        queue()
+                .defer(d3.json, "data/perDayData.json")
+                .defer(d3.json, "data/MYWorld_fields.json")
+                .await(dataLoaded);
+    }
+    
+    startHere();
+})();
+
+        </script>
+</body>
+
+</html>

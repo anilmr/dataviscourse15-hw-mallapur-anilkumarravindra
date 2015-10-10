@@ -44,6 +44,7 @@ function CompareVis (_parentElement, _data, _metaData) {
     self.metaData = _metaData;
     self.displayData = [];
     self.secdisplayData = [];
+    self.printData = [];
 
     self.initVis();
 }
@@ -55,19 +56,16 @@ function CompareVis (_parentElement, _data, _metaData) {
 CompareVis.prototype.initVis = function () {
     var self = this; // read about the this
 
-    self.svg = self.parentElement.select("svg");
+    self.svg = d3.select("#compVis svg");
 
     self.graphW = 500;
-    self.graphH = 300;
+    self.graphH = 270;
 
-    self.xScale = d3.scale.ordinal().rangeBands([0, self.graphW], 0.1).domain(d3.range(0, 16));
-
-    self.altxScale = d3.scale.ordinal().domain([0,1]).rangeBands([0, self.xScale.rangeBand()]);
+    self.xScale = d3.scale.ordinal().
+                        rangeBands([0, self.graphW], 0.1).domain(d3.range(0, 16));
     // xScale and xAxis stays constant
-
+    self.altxScale = d3.scale.ordinal();
     self.yScale = d3.scale.linear().range([self.graphH, 0]);
-
-
     self.xAxis = d3.svg.axis().scale(self.xScale);
     // xScale and xAxis stays constant
 
@@ -77,7 +75,7 @@ CompareVis.prototype.initVis = function () {
     self.visG = self.svg.append("g").attr({
         "transform": "translate(" + 60 + "," + 10 + ")"
     });
-
+    self.altxScale.domain(d3.range(0, 1)).rangeRoundBands([0, self.xScale.rangeBand()]);
     // xScale and xAxis stays constant:
     // copied from http://bl.ocks.org/mbostock/4403522
     self.visG.append("g")
@@ -99,7 +97,7 @@ CompareVis.prototype.initVis = function () {
     self.wrangleData(null);
 
     // call the update method
-    self.updateVis();
+    self.updateNewVis();
 };
 
 
@@ -116,13 +114,11 @@ CompareVis.prototype.wrangleData = function (_filterFunction) {
 
 };
 
-
-
 /**
  * the drawing function - should use the D3 selection, enter, exit
  */
-CompareVis.prototype.updateVis = function () {
 
+CompareVis.prototype.updateNewVis = function () {
 
     var self = this;
 
@@ -130,34 +126,37 @@ CompareVis.prototype.updateVis = function () {
     var minMaxY = [0, d3.max(self.displayData)];
     self.yScale.domain(minMaxY);
     self.yAxis.scale(self.yScale);
-
     // draw the scales :
     self.visG.select(".yAxis").call(self.yAxis);
     // draw the bars :
-    var bars = self.visG.selectAll(".bar").data(function(d) {return d.prio; });
+    var color = ["#deebf7", "#3182bd"];
+    var bars = self.visG.selectAll(".bar").data(self.displayData);
+
+    var stacked = self.visG.selectAll("series")
+        .data(self.printData)
+        .enter().append("g")
+        .attr("fill", function(d, i) {return color[i]});
+
+    var bars = stacked.selectAll("bar").data(function(d){ return d;});
     bars.exit().remove();
     bars.enter().append("rect")
-        .attr({
-            "class": "bar",
-            "transform": function(d, i) { return "translate(" + self.altxScale(i) + ",0)"; }, 
-            "width": self.altxScale.rangeBand(),
+            .attr({
+            "class": "bar", 
+            "width": function(d) { return self.altxScale.rangeBand(); },
             "x": function (d, i) {
                 return self.xScale(i);
-            }
-        }).style({
-            "fill": function (d, i) {
-                return self.metaData.priorities[i]["item-color"];
             }
         });
 
     bars.attr({
         "height": function (d) {
-            return self.graphH - self.yScale(d) - 1;
+            return self.graphH - self.yScale(d);
         },
         "y": function (d) {
-            return self.yScale(d.values);
+            return self.yScale(d);
         }
     });
+
 };
 
 
@@ -173,7 +172,7 @@ CompareVis.prototype.onSelectionChange = function (selectionStart, selectionEnd)
     self.displayData = self.wrangleData(function (data) {
         return (data.time <= selectionEnd && data.time >= selectionStart);
     });
-    self.updateVis();
+    //self.updateVis();
 };
 
 CompareVis.prototype.newonSelectionChange = function (selectionStart, selectionEnd) {
@@ -182,14 +181,10 @@ CompareVis.prototype.newonSelectionChange = function (selectionStart, selectionE
     self.newdisplayData = self.wrangleData(function (data) {
         return (data.time <= selectionEnd && data.time >= selectionStart);
     });
-
-    var i = 0;
-    d.prio = [];
-    for(i=0;i<self.displayData.length;i++) {
-        d.prio.push({name: self.metaData.priorities[i]["item-title"], value: [self.displayData[i], self.newdisplayData[i]]});
-        }
-    console.log(d.prio);
-    self.updateVis();
+    self.printData = [];
+    self.printData.push(self.displayData);
+    self.printData.push(self.newdisplayData);
+    self.updateNewVis();
 };
 
 /*
