@@ -63,26 +63,22 @@ function updateTransferFunction() {
         // which would convert the exponential transfer function
         // value into scaled logarithmic transfer function value.
         var alpha = 0;
-        if(value < 0.05)
-        {
-            alpha = 0;
-        }
-
-        else {
-            alpha = ((Math.exp(value) * (0.99)) / Math.exp(1));
+  
+        
+            alpha = ((Math.exp(value) * (0.2)) / Math.exp(1));
             //console.log(alpha);
-        }
+        
 
-        if (value >= 0.05 && value < range1) {
-            return convertHex(color1, alpha);
+        if (value >= 0.00 && value < range1) {
+            return convertHex(color1, value);
             //return 'rgba(' + color1 + ',' + value + ')';
         } 
         else if (value >= range1 && value < range2) {
-            return convertHex(color2, alpha);
+            return convertHex(color2, value);
             //return 'rgba(' + color2 + ',' + value + ')';
         }
         else if (value >= range2 && value < range3) {
-            return convertHex(color3, alpha);
+            return convertHex(color3, value);
             //return 'rgba(' + color3 + ',' + value + ')';
 
         }

@@ -73,26 +73,27 @@ void main( void ) {
     float lenAcquired = 0.0;
 
     //pseudocolor exterior plot
-    vec4 colorSample = classify(sampleAs3DTexture( frontPos ));
-    colorSample.a = 1.0;
+   // vec4 colorSample = classify(sampleAs3DTexture( frontPos ));
+   // colorSample.a = 1.0;
+   vec4 colorSample;
 
-    for(int i = 0 ; i < 100 ; i++)
+    for(int i = 0 ; i < 4096 ; i++)
     {
           
-        currentPosition += deltaDir;
-        lenAcquired += deltaDirLength;
+        
         colorSample = classify(sampleAs3DTexture( currentPosition ));
         float alphaSample = colorSample.a * alphaCorrection;
         vec4 colorAlpha = colorSample * alphaSample;
         colorAcquired += (1.0 - alphaAcquired) * colorAlpha;
         //Store the alpha accumulated so far.
         alphaAcquired += alphaSample;
-
+        currentPosition += deltaDir;
+        lenAcquired += deltaDirLength;
         //check boundary conditions.
         if(lenAcquired >= rayLength)
             break;
 
-        if(alphaAcquired >= 1.0)
+        if(alphaAcquired >= 0.97)
         break;
 
       }
