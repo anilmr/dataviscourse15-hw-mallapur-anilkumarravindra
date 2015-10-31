@@ -1,108 +1,121 @@
-#CS-5630 / CS-6630 Homework 3
-*Due: Friday, September 25, 11:59 pm. Value: 6%*
+Homework 6
+===
+*This homework is due on Friday, October 30, 11:59 PM. Value: 10%*
 
-In this assignment you will create a bar chart, a node-link diagram and a map that are linked to each other and visualize data from PAC 12 teams and games.
+In this homework you will develop a volume renderer. Volume rendering works through ray casting. As a ray intersects the volume, you determine for each voxel how much it contributes to the final image (transparency) and what color it is. This mapping is driven by a transfer function. 
 
-## Implementation
+We have provided a volume renderer for you, but it is not very good, it only renders the exterior of the volume. Your task is to (a) implement the ray-casting algorithm and (b) design a good transfer function widget, so that you can interactively specify your own transfer function and reveal all the hidden information in the volumne. Finally, you can implement lighting, which will make your scene look much better.
 
-We have provided boilerplate code that you should pull into your private repository.
+With a decent transfer function and a complete implementation (including the bonus), the volumes should look something like this:
 
-As in previous homeworks, add your name, your e-mail address, and your uID to the HTML elements at the top. Also make sure your submission is a valid HTML5 file. Check that it is valid by uploading it to the [W3C HTML Validator](https://validator.w3.org/#validate_by_upload).
+![Volume Rendering Result](figures/rendering.png)
 
-Other than adding your name, etc., you shouldn't need to edit hw3.html in this assignment (though you are free to add / adjust CSS rules if you wish).
+Note that the transfer function widget part of this homework is much more open-ended than the previous homeworks, we provide no scaffold for you except for the interface to the volume renderer.
 
-Your project structure should look like this:
+## Technical Details
 
-    hw3/
-        hw3.html
-        script.js
-        data/
-            pac12_2013.json
-            us.json
+This assignment consists of two separate tasks. The first is to modify the GLSL shader pseudocode to perform direct volume rendering (instead of its current behavior, which just renders the outside color of the volume bounding box). The second is to design the transfer function editor in D3. These tasks are orthogonal; you can complete one without the other. Of course, you will get nice results only if you do both.
 
-Remember, to be able to access the data files with javascript, you will need to be *serving* the hw3 directory, not just opening the HTML file in a browser. If your development environment doesn't already launch a server for you, you can start one with:
+The example code that we have given you logs a histogram to the console each time you switch volumes in the renderer. Each object in the array represents a bin; the `count` value tells you how many voxels have a value between `lowBound` and `highBound`.
+The information in this histogram is very important for guiding the user to potentially
+interesting structures in the data, you might want to use this somewhere in your design.
 
-    cd path/to/hw3
-    python -m SimpleHTTPServer 8080
 
-And you can view the page at [http://localhost:8080](http://localhost:8080)
+## Task 1 - Volume Rendering
 
-## Visualization design
+Volume rendering will be implemented as a ray caster inside a WebGL shader. This will be written in the OpenGL shading language, GLSL (specifically, the GLSL ES, ES here stand for "embedded systems"). A "cheat sheet" for programming GLSL can be found [here](https://www.khronos.org/files/opengl44-quick-reference-card.pdf), more information is available in [this tutorial](https://www.opengl.org/sdk/docs/tutorials/TyphoonLabs/Chapter_1.pdf).
 
-We are going to compare attendance at Pac-12 (American) [Football games](http://datahub.io/dataset/college-football-statistics-2005-2013) in 2013 (unfortunately, the organization that collects this data stopped releasing it publicly in 2014).
+Theoretical background for volume rendering is covered in the assigned reading [Real Time Volume Graphics](http://webdocs.cs.ualberta.ca/~pierreb/Visualization2006/Real-Time-Volume-Rendering.pdf) Chapters 1--3; a practical ray casting implementation is provided in the tutorial slides [here](http://www.cg.informatik.uni-siegen.de/data/Tutorials/EG2006/RTVG04_GPU_Raycasting.pdf) (in particular, slides 1--8).
 
-We want to understand football game attendance from the team perspective (how did attendance at a team's games change as the season progressed?), from the geographic perspective (how did geography factor in to game attendance?), and from a network perspective (how did the opposing team factor in to game attendance?).
+The WebGL shading language "ELSL" implements a subset of the OpenGL specification, and does not support several features, including actual 3D texture sampling. However, we can still implement a basic volume renderer by linearly interpolating 2D textures, similar to the 2D slicing approach detailed in Chapter 4 of [Real Time Volume Graphics](http://webdocs.cs.ualberta.ca/~pierreb/Visualization2006/Real-Time-Volume-Rendering.pdf). To make the assignment far simpler, we have provided this for you, in reference code based on the WebGL tutorial [here](https://github.com/lebarba/WebGLVolumeRendering). Both this and our assignment are based on [three.js](http://threejs.org), a WebGL interface library for Javascript. 
 
-You will be implementing a bar chart, a node-link diagram with a force-directed layout, and a map view of the data.
+Volume rendering is the process of classifying and blending multiple discrete samples along the ray. Tutorials abound on the internet; however for the purposes of this assignment you may find it more useful to refer to the existing code in [shaders/fragmentShaderSecondPass.frag](shaders/fragmentShaderSecondPass.frag). 
 
-In addition to supporting hover events on Teams, Games, and Locations, your tool will support *selecting* sets of Games. The bar chart will display only the selection.
+This code provides the following pieces which you can use:
 
-## About the data
+- The *inteprolation function*, which returns an interpolated value at an arbitrary point in space on [0,1]^3.
+ `float sampleAs3DTexture(vec3 texCoord)`
+- The classification function, which applied a (1D) transfer function to the color value,
+  `vec4 classify(float value)`
+- The origin and direction of the ray, 
 
-We have taken care of the data loading for you in the homework skeleton. We're reading in the graph data from the `pac12_2013.json` file and the map for the `us.json` GeoJSON file. 
+  ```
+  uniform vec3 origin;
+  vec3 dir = backPos - frontPos;
+  ```
+- variables for accumulating (blending) color and opacity, respectively:
 
-The graph data (the global ``data`` variable) contains *two* classes of nodes; Team nodes, and Game nodes. Each Team or Game node has a ``data_type`` attribute that indicates what it is. In addition to this, we have created two lookup tables (``locationData`` and ``teamSchedules``) that contain ordered lists of games for locations and teams.
+  ```
+  vec4 colorSample;
+  float alphaSample;
+  ```
 
-To better understand the structure of the data or the lookup structures we have provided, it's a good idea to start by logging the data objects to the console.
+Given these, we would like to write a volume render as a loop, roughly as follows:
 
-## Part I: Bar Chart: Scales and Axes
+```
+for all samples t from the front to the back of the box
+  compute the position of the current sample, using ray origin and direction
+  interpolate and classify the sample to find a color
+  composite the color sample
+```
 
-Your first task is to fill in the ``updateBarChart()`` function. Create a bar chart that displays the attendance of each Game object in the ``selectedSeries`` list (the program starts off with all of Utah's games selected).
+Compositing involves alpha blending the color samples as follows:
 
-Make sure to include x and y axes, with date and numeric tick labels, respectively.
+```
+accumulatedColor += (1.0 - accumulatedAlpha) * colorSample * alphaSample;
+accumulatedAlpha += alphaSample;
+```
 
-Next, color each bar based on the game's attendance (both height and color should encode game attendance); define and use the global ``colorScale`` variable. Make sure to use a perceptually salient color scale; good examples are available at [colorbrewer2.org](http://colorbrewer2.org).
+Putting these together, the assignment consists of two tasks:
 
-Make sure to use a **consistent** vertical and color scale (this should not change), and adapt the horizontal scale to the number of data points that have been selected.
+**Task 1a**. Modify the `main()` function in shaders/fragmentShaderSecondPass.frag to perform volume ray casting instead of rendering the exterior of the volume bounding box.
 
-## Part II: Node-link Diagram
+**Task 1b** (*Extra Credit*): As a bonus, implement gradient-based lighting, higher-order filtering or other optimizations for direct volume rendering.
 
-Your next task is to create an interactive node-link diagram. Note that ``deriveGraphData()`` formats the data in a way that is similar to most online examples - feel free to follow examples, but **always cite your sources** in the comments, especially if your implementation is substantially similar. If in doubt, cite it!
+## Task 2 - Transfer Function Widget Design & Implementation
 
-Fill in the first and last parts of ``updateForceDirectedGraph()``. At this stage, the Game and Team nodes should use different shapes, you could use triangles for teams and circles for games. The [d3.svg.symbol()](https://github.com/mbostock/d3/wiki/SVG-Shapes#symbol) function will proof helpful for this. You should also use different CSS styles (hint: check out the CSS in ``hw3.html`` for an easy way to differentiate between the two). 
-Your graph should be animated and interactive, i.e., you should be able to drag nodes to adjust the layout.
+Desiging a good transfer function widget is a non-trivial task; it's arguably an open research
+problem! How can the user tell your system which structures they want to visualize inside a cube
+of numbers?
 
-**Extra Credit:** This is a good example of a [*bipartite* graph](https://en.wikipedia.org/wiki/Bipartite_graph). In addition to the force-directed graph, develop a graph layout that takes advantage of this structure. You are free to choose how you represent it, but you should briefly argue for your design. Put your comments in the HTML file. Put the graph in a new view next to the force-directed layout - you'll have to create this yourself. *Warning: this is not an easy feat, make sure to complete the rest of the assignment before attempting this.*
+Many existing volume rendering software packages actually do this very poorly! As much as you can,
+try to not let examples that you've already seen bias your creativity. This is a design problem, not a
+math problem: **there are many valid solutions!** For grading, it's probably best to think of us
+as art critics, rather than someone following a strict rubric. If your design
+looks and feels like something that already exists, we will probably be pretty nitpicky about
+technical, design, and aesthetic flaws; we'll expect a really high-quality submission. If, however,
+you are trying something new and creative (that might fail), we will be much more forgiving.
 
-## Part III: Maps
+**We will give a bonus to stellar implementations and/or excellent designs.**
 
-On to the map. Start by filling in ``drawStates()`` to draw the background. The map we have provided in ``us.json`` uses the Albers USA projection - again, if you mimic code that you find online, **make sure you cite it!**
+### Task 2a: Design
+Sketch at least three designs for a way for a user to specify a transfer function. Include pictures of your design and brief descriptions of them in a file with the name `design.pdf`.
 
-Now that you've drawn the map, draw the circle (or another symbol you chose to represent games) (in the first part of ``updateMap()``) for each location where a football game was played. Note that some locations in the dataset are missing lat/lon coordinates; it's fine to leave these off the map.
+### Task 2b: Implementation
+Implement one design. Ideally, you should only need to edit `script.js`, or add your own Javascript
+files (you shouldn't need to edit anything in the `lib/` directory, unless you're really brave and
+want to derive more from the voxel data than just a histogram).
 
-The markers on the map should have the same appearance as the markers that represent games in your node-link diagram; use a consistent visual language throughout your visualization.
+Whatever your solution is, you should define sensible default values for your transfer function, and make sure that it is easy for us to discover all the features. If you have a subtle feature, make sure to point us at it so we can consider it when grading.
 
-## Part IV: Events
+If you are attempting something difficult and you find that you hit roadblocks in your implementation,
+be sure to document what you *wanted* to do, and, to the best of your ability, describe *why* the
+technology isn't allowing you do it. Be sure to include these details in your `design.pdf` submission.
 
-At this point, you should have three views of data, but only the force-directed graph is interactive.
+We can't stress enough how important this documentation is, especially if you're trying
+something new and creative. It's possible that *only* submitting your `design.pdf` could
+receive a very high portion of the marks (though unlikely; we want to see that you at least made an honest effort to implement your wild, crazy idea).
 
-There are various places throughout ``script.js`` that are flagged with:
+## Task 3: Analysis
+Submit at least one screenshot of interesting structures that you discover in each volume with your widget, and discuss strengths and weaknesses of your design. Add this to your `design.pdf` file.
 
-    // ******* TODO: PART IV *******
-
-In each of these locations, make the various marks respond to appropriate events. You shouldn't need to write too much code; linking to the three functions ``setHover()``, ``clearHover()``, and ``changeSelection(d)`` should be sufficient.
-
-## Part V: Reacting to Events
-
-Now you should fill in the three functions. For hover events, display an appropriate text label in the ``<span id="#info"></span>`` element.
-
-For click events, you should modify the global ``selectedSeries`` array. When you click a game, only that game should be in the selectedSeries array. When you click a team, all its games should be in the array.
-
-Next, add code to your node-link diagram that applies the ``colorScale`` to the fill of the selected game nodes, and dramatically increases their size - nodes that are selected should really stand out (something like 2x the size should do the trick). You can use the svg scale transformation to achieve this. Games that aren't selected should revert to their default styling.
-
-Finally, color each location on the map by the *mean* attendance of the selected games that occurred at that location; you should also increase the size of these nodes so that they stand out.
 
 ## Grading
 
-Your final solution should look something like this:
+Your scores on this assignment will be weighted as follows:
 
-![Bar chart](preview.gif)
-
-Your score on this assignment will be as follows:
-
-15%: Part I: Bar chart shows current selection, with appropriate scales, axes, and coloring<br/>
-30%: Part II: Interactive node-link diagram shows distinct team and game nodes, and their connections<br/>
-25%: Part III: You show the map, and it shows locations where games were played<br/>
-20%: Part IV + V: Hovering over elements displays meaningful information in the corner of the screen, and the selection can be changed from all three views. Selections are appropriately updated, nodes are enlarged.<br />
-10%: Appropriate sources are cited, and visual design is consistent and perceptually accessible<br/>
-20%: Part II Extra Credit: We will judge both the quality of the design and the implementation, and we will use a high standard for full credit.<br />
+35%: Task 1a: Working volume rendering. <br />
+20%: Task 2a: At least three transfer function designs with pictures. <br />
+35%: Task 2b: Implementation of one design and/or **thorough** documentation as to why the design or parts of it are infeasible. <br />
+10%: Task 3: At least one screenshot, with discussion of strengths and weaknesses of your system. <br />
+10%: Bonus: Excellent design solution and implementation, or implementation of volumetric lighting in Task 1b. <br />
