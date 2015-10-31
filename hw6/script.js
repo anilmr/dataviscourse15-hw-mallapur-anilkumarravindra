@@ -1,13 +1,54 @@
 /*globals VolumeRenderer, d3, console*/
 
 var renderer,
-    allHistograms = {};
+allHistograms = {};
 
-var colorRed = '255,0,0';
-var colorBlue = '0,180,50';
-var colorGreen = '20,0,210';
-var range1 = 0.2;
-var range2 = 0.5;
+var color1="ff0000";
+var color2="009933";
+var color3="0066FF";
+var range1 = 0.25;
+var range2 = 0.75;
+var range3 = 1.0;
+
+function convertHex(hex,opacity){
+    hex = hex.replace('#','');
+    r = parseInt(hex.substring(0,2), 16);
+    g = parseInt(hex.substring(2,4), 16);
+    b = parseInt(hex.substring(4,6), 16);
+
+    result = 'rgba('+r+','+g+','+b+','+opacity+')';
+    return result;
+}
+
+String.prototype.hexEncode = function(){
+    var hex, i;
+
+    var result = "";
+    for (i=0; i<this.length; i++) {
+        hex = this.charCodeAt(i).toString(16);
+        result += ("000"+hex).slice(-4);
+    }
+
+    return result
+}
+
+$('#colorpicker').on('change', function(){
+    color1 = (this.value.replace('#',''));
+    console.log(color1);
+    updateTransferFunction();
+});
+
+$('#colorpicker2').on('change', function(){
+    color2 = (this.value.replace('#',''));
+    console.log(color2);
+    updateTransferFunction();
+
+});
+$('#colorpicker3').on('change', function() {
+    color3 = (this.value.replace('#',''));
+    console.log(color3);
+    updateTransferFunction();
+});
 
 function updateTransferFunction() {
     renderer.updateTransferFunction(function (value) {
@@ -23,24 +64,29 @@ function updateTransferFunction() {
         // value into scaled logarithmic transfer function value.
         var alpha = 0;
         if(value < 0.05)
+        {
             alpha = 0;
+        }
 
         else {
-            x = ((exp(value) * (0.8)) / exp(1));
-            console.log(x);
+            alpha = ((Math.exp(value) * (0.99)) / Math.exp(1));
+            //console.log(alpha);
         }
 
         if (value >= 0.05 && value < range1) {
-            return 'rgba(' + colorRed + ',' + x + ')';
+            return convertHex(color1, alpha);
+            //return 'rgba(' + color1 + ',' + value + ')';
         } 
         else if (value >= range1 && value < range2) {
-            return 'rgba(' + colorBlue + ',' + x + ')';
+            return convertHex(color2, alpha);
+            //return 'rgba(' + color2 + ',' + value + ')';
         }
         else if (value >= range2 && value < range3) {
-            return 'rgba(' + colorGreen + ',' + x + ')';
+            return convertHex(color3, alpha);
+            //return 'rgba(' + color3 + ',' + value + ')';
 
         }
-        return 'rgba(' + rgb2 + ',' + value + ')';
+        return 'rgba(' + color3 + ',' + value + ')';
     });
 }
 
