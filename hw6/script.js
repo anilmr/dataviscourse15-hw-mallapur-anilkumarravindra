@@ -26,18 +26,18 @@ function updateTransferFunction() {
             alpha = 0;
 
         else {
-            x = (exp(value) * (0.8)) / exp(1));
+            x = ((exp(value) * (0.8)) / exp(1));
             console.log(x);
         }
 
         if (value >= 0.05 && value < range1) {
-            return 'rgba(' + colorRed + ',' + x + ')');
+            return 'rgba(' + colorRed + ',' + x + ')';
         } 
         else if (value >= range1 && value < range2) {
-            return 'rgba(' + colorBlue + ',' + x + ')');
+            return 'rgba(' + colorBlue + ',' + x + ')';
         }
         else if (value >= range2 && value < range3) {
-            return 'rgba(' + colorGreen + ',' + x + ')');
+            return 'rgba(' + colorGreen + ',' + x + ')';
 
         }
         return 'rgba(' + rgb2 + ',' + value + ')';
